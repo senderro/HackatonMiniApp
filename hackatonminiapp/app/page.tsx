@@ -1,63 +1,70 @@
-// app/page.tsx
-'use client';
-
-import { useEffect, useState } from 'react';
+'use client'
+import { useEffect, useState } from 'react'
 
 type TelegramUser = {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
-  photo_url?: string;
-};
+  id: number
+  first_name: string
+  last_name?: string
+  username?: string
+  photo_url?: string
+}
 
-export default function HomePage() {
-  const [user, setUser] = useState<TelegramUser | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export default function Home() {
+  const [user, setUser] = useState<TelegramUser | null>(null)
+  const [verified, setVerified] = useState<boolean | null>(null)
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
-    if (!tg) {
-      setError('SDK do Telegram não encontrado');
-      return;
-    }
-    tg.ready();
+    if (typeof window === 'undefined') return
 
-    // Carrega client-side
-    const unsafe = tg.initDataUnsafe;
-    if (unsafe.user) setUser(unsafe.user as TelegramUser);
+    const tg = (window as any).Telegram?.WebApp
+    const userData = tg?.initDataUnsafe?.user
+    const initData = tg?.initData
 
-    // Valida no backend
-    fetch('/api/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ initData: tg.initData }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.valid) setError('Validação falhou: ' + data.error);
+    if (userData) {
+      setUser(userData)
+      tg.ready()
+
+      // Verifica no backend se os dados são legítimos
+      fetch('/api/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData }),
       })
-      .catch(err => setError('Erro de rede: ' + err.message));
-  }, []);
+        .then(res => res.json())
+        .then(data => {
+          setVerified(data.verified ?? false)
+        })
+        .catch(() => setVerified(false))
+    }
+  }, [])
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1>🏠 Home do MiniApp</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <main className="flex flex-col items-center justify-center min-h-screen p-6">
+      <h1 className="text-2xl font-bold mb-4">Telegram Mini App</h1>
 
       {user ? (
-        <ul>
-          <li><strong>ID:</strong> {user.id}</li>
-          <li><strong>Nome:</strong> {user.first_name} {user.last_name}</li>
-          <li><strong>Username:</strong> {user.username}</li>
-          <li><strong>Idioma:</strong> {user.language_code}</li>
-          <li><strong>Premium:</strong> {user.is_premium ? 'Sim' : 'Não'}</li>
-        </ul>
+        <>
+          <p>Olá, {user.first_name}!</p>
+          {user.photo_url && (
+            <img
+              src={user.photo_url}
+              alt="Avatar"
+              className="w-24 h-24 rounded-full mt-2"
+            />
+          )}
+          <pre className="text-sm bg-gray-100 p-2 mt-4 rounded-md w-full max-w-md">
+            {JSON.stringify(user, null, 2)}
+          </pre>
+          <div className="mt-4">
+            {verified === true && <p className="text-green-600">✅ Usuário verificado</p>}
+            {verified === false && (
+              <p className="text-red-600">❌ Dados inválidos ou não verificados</p>
+            )}
+          </div>
+        </>
       ) : (
-        <p>Carregando dados do usuário...</p>
+        <p>Carregando dados do Telegram...</p>
       )}
-    </div>
-  );
+    </main>
+  )
 }
