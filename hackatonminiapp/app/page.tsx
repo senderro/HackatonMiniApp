@@ -1,54 +1,37 @@
 'use client';
-import { retrieveRawInitData } from '@telegram-apps/sdk';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { HiChevronRight } from 'react-icons/hi';
 
-type ValidationResponse = {
-  valid: boolean;
-  initData?: {
-    user?: {
-      first_name: string;
-      last_name?: string;
-      username?: string;
-      photo_url?: string;
-    };
-  };
-  error?: string;
-};
+type Group = { id: string; name: string; balance: number };
 
 export default function Home() {
-  const [result, setResult] = useState<ValidationResponse | null>(null);
-
+  const [groups, setGroups] = useState<Group[]>([]);
   useEffect(() => {
-    const raw = retrieveRawInitData();
-    fetch('/api/validate', {
-      method: 'POST',
-      headers: {
-        Authorization: `tma ${raw}`
-      }
-    })
-      .then(res => res.json())
-      .then((json: ValidationResponse) => setResult(json))
-      .catch(() => setResult({ valid: false }));
+    setGroups([
+      { id: '1', name: 'Almoço Amigos', balance: -25.5 },
+      { id: '2', name: 'Viagem SP', balance: 40 },
+    ]);
   }, []);
 
-  if (!result) return <div>Carregando...</div>;
-  if (!result.valid) return <div>Dados não confiáveis</div>;
-
-  const user = result.initData?.user;
   return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
-      {user?.photo_url && (
-        <img
-          src={user.photo_url}
-          alt="Foto do usuário"
-          style={{ borderRadius: '50%', width: 120, height: 120 }}
-        />
-      )}
-      <h1>
-        {user?.first_name} {user?.last_name ?? ''}
-      </h1>
-      <p>Email: {user?.username ? `${user.username}@telegram.org` : '—'}</p>
-      <p style={{ fontWeight: 'bold' }}>Confiável: Sim</p>
+    <div className="p-4 space-y-4">
+      {groups.map(g => (
+        <Link
+          key={g.id}
+          href={`/group/${g.id}`}
+          className="bg-white rounded-lg shadow p-4 flex justify-between items-center hover:shadow-md"
+        >
+          <div>
+            <h2 className="font-semibold text-lg">{g.name}</h2>
+            <p className="text-sm text-gray-500">Detalhes do grupo</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className={`${g.balance >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>R$ {g.balance.toFixed(2)}</span>
+            <HiChevronRight />
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
