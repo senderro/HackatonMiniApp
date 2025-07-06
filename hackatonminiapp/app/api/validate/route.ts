@@ -5,7 +5,7 @@ const TELEGRAM_BOT_TOKEN = process.env.BOT_TOKEN!
 
 export async function POST(req: NextRequest) {
   const { initData } = await req.json()
-
+console.log("Received initData:", initData);
   if (!initData) {
     return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 })
   }
