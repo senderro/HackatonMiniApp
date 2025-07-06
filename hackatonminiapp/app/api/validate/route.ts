@@ -17,40 +17,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing hash' }, { status: 400 })
   }
 
-  // Remover o hash e qualquer assinatura extra
+  // 1. Remove os campos que não entram no cálculo
   params.delete('hash')
-  params.delete('signature')
+  params.delete('signature') // mesmo sendo para outro método
 
-  // Ordenar os parâmetros e montar a data_check_string
+  // 2. Monta o data_check_string corretamente
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, val]) => `${key}=${val}`)
+    .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 
-  // Geração correta da chave secreta (key = 'WebAppData', mensagem = BOT_TOKEN)
+  // 3. Gera o secret_key: HMAC_SHA256(bot_token, "WebAppData")
   const secretKey = crypto
-    .createHmac('sha256', 'WebAppData')
-    .update(BOT_TOKEN)
+    .createHmac('sha256', 'WebAppData') // chave = "WebAppData"
+    .update(BOT_TOKEN)                 // mensagem = BOT_TOKEN
     .digest()
 
-  // Calcular hash do data_check_string usando a chave correta
+  // 4. Calcula o hash final: HMAC_SHA256(dataCheckString, secretKey)
   const computedHash = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex')
 
-  // Comparação segura dos hashes
-  const receivedHashBuffer = Buffer.from(receivedHash, 'hex')
-  const computedHashBuffer = Buffer.from(computedHash, 'hex')
+  // 5. Compara os hashes de forma segura
   const match =
-    receivedHashBuffer.length === computedHashBuffer.length &&
-    crypto.timingSafeEqual(receivedHashBuffer, computedHashBuffer)
+    receivedHash.length === computedHash.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(receivedHash, 'hex'),
+      Buffer.from(computedHash, 'hex')
+    )
 
   console.log('→ DEBUG TELEGRAM VALIDATION')
   console.log('data_check_string:', dataCheckString)
   console.log('received hash:', receivedHash)
   console.log('computed hash:', computedHash)
   console.log('match:', match)
+  console.log('bot token:', BOT_TOKEN)
 
-  return NextResponse.json({ ok: true, verified: match })
+  // 6. Verificação opcional: validade do timestamp
+  const authDate = parseInt(params.get('auth_date') || '0', 10)
+  const now = Math.floor(Date.now() / 1000)
+  const ageInSeconds = now - authDate
+  const expired = ageInSeconds > 3600 // 1 hora
+
+  if (!match) {
+    return NextResponse.json({ ok: false, verified: false, reason: 'hash mismatch' }, { status: 403 })
+  }
+
+  if (expired) {
+    return NextResponse.json({ ok: false, verified: false, reason: 'auth_date expired' }, { status: 403 })
+  }
+
+  return NextResponse.json({ ok: true, verified: true })
 }
