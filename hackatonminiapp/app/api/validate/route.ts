@@ -1,66 +1,67 @@
-// backend: pages/api/validate.ts (ou app/api/validate/route.ts se usar App Router)
+// backend: app/api/validate/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const BOT_TOKEN = process.env.BOT_TOKEN!
+const BOT_TOKEN = (process.env.BOT_TOKEN ?? '').trim()
 
 export async function POST(req: NextRequest) {
   const { initData } = await req.json()
 
   if (!initData) {
-    return NextResponse.json(
-      { ok: false, error: 'Missing initData' },
-      { status: 400 }
-    )
+    return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 })
   }
 
+  // 1. Parse e extraia hash
   const params = new URLSearchParams(initData)
   const receivedHash = params.get('hash')
-
   if (!receivedHash) {
-    return NextResponse.json(
-      { ok: false, error: 'Missing hash' },
-      { status: 400 }
-    )
+    return NextResponse.json({ ok: false, error: 'Missing hash' }, { status: 400 })
   }
-
-  // Remover hash dos parâmetros antes de criar a string de verificação
   params.delete('hash')
-  params.delete('signature') // para compatibilidade, caso exista
+  params.delete('signature')
 
-  // Monta data_check_string: todos os pares key=value ordenados por key
+  // 2. Construa a data_check_string ordenada
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([k, v]) => `${k}=${v}`)
     .join('\n')
 
-  // Gera secretKey: HMAC_SHA256(key=BOT_TOKEN, message="WebAppData")
+  // 3. Gere o secretKey corretamente:
+  //    HMAC-SHA256(key=BOT_TOKEN, msg="WebAppData")
   const secretKey = crypto
-    .createHmac('sha256', BOT_TOKEN)
-    .update('WebAppData')
-    .digest()
+    .createHmac('sha256', Buffer.from(BOT_TOKEN, 'utf8'))
+    .update('WebAppData', 'utf8')
+    .digest()            // Buffer de 32 bytes
 
-  // Calcula o hash final: HMAC_SHA256(key=secretKey, message=dataCheckString)
+  // 4. Calcule o hash final:
+  //    HMAC-SHA256(key=secretKey, msg=dataCheckString)
   const computedHash = crypto
     .createHmac('sha256', secretKey)
-    .update(dataCheckString)
+    .update(dataCheckString, 'utf8')
     .digest('hex')
 
-  // Comparação segura dos hashes
-  const match =
-    receivedHash.length === computedHash.length &&
-    crypto.timingSafeEqual(
-      Buffer.from(receivedHash, 'hex'),
-      Buffer.from(computedHash, 'hex')
-    )
-
+  // 5. Logs de debugging
   console.log('→ DEBUG TELEGRAM VALIDATION')
-  console.log('data_check_string:', dataCheckString)
-  console.log('received hash:', receivedHash)
-  console.log('computed hash:', computedHash)
-  console.log('match:', match)
+  console.log('BOT_TOKEN   (utf8→hex):', Buffer.from(BOT_TOKEN, 'utf8').toString('hex'))
+  console.log('secretKey   (hex)      :', secretKey.toString('hex'))
+  console.log('data_check_string      :\n' + dataCheckString)
+  console.log('received hash (hex)    :', receivedHash)
+  console.log('computed hash (hex)    :', computedHash)
 
-  // Verifica validade do timestamp (1 hora)
+  // 6. Compare de forma segura
+  let match = false
+  try {
+    match =
+      receivedHash.length === computedHash.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(receivedHash, 'hex'),
+        Buffer.from(computedHash, 'hex')
+      )
+  } catch {
+    match = false
+  }
+
+  // 7. Verifique expiração de timestamp (1h)
   const authDate = parseInt(params.get('auth_date') || '0', 10)
   const now = Math.floor(Date.now() / 1000)
   const expired = now - authDate > 3600
@@ -71,7 +72,6 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     )
   }
-
   if (expired) {
     return NextResponse.json(
       { ok: false, verified: false, reason: 'auth_date expired' },
