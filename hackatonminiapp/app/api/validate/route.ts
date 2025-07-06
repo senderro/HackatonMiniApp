@@ -1,71 +1,90 @@
-// backend: app/api/validate/route.ts (Next.js App Router)
+// backend: app/api/validate/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const BOT_TOKEN = (process.env.BOT_TOKEN ?? '').trim()
+interface KeyValue {
+  key: string
+  value: string
+}
+
+interface RequestBody {
+  initData: string
+}
 
 export async function POST(req: NextRequest) {
-  const { initData } = await req.json()
+  // 1. Tipar o corpo da requisição
+  const { initData }: RequestBody = await req.json()
 
   if (!initData) {
-    return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 })
+    return NextResponse.json(
+      { ok: false, error: 'Missing initData' },
+      { status: 400 }
+    )
   }
 
-  // 1. Parse e extraia o hash
-  const params = new URLSearchParams(initData)
-  const receivedHash = params.get('hash')
-  if (!receivedHash) {
-    return NextResponse.json({ ok: false, error: 'Missing hash' }, { status: 400 })
-  }
-  params.delete('hash')
-  params.delete('signature') // em caso de uso de third‐party
+  // 2. Separar a query string bruta em pares "key=value"
+  const rawPairs: string[] = initData.split('&')
 
-  // 2. Monte o data_check_string ordenado
-  const dataCheckString = Array.from(params.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}=${v}`)
+  // 3. Extrair key/value sem decodificar e filtrar out 'hash'
+  const kv: KeyValue[] = rawPairs
+    .map((pair: string): KeyValue => {
+      const idx: number = pair.indexOf('=')
+      return {
+        key: pair.substring(0, idx),
+        value: pair.substring(idx + 1),
+      }
+    })
+    .filter(({ key }: KeyValue) => key !== 'hash')
+
+  // 4. Ordenar alfabeticamente pelos nomes das chaves
+  kv.sort((a: KeyValue, b: KeyValue) => a.key.localeCompare(b.key))
+
+  // 5. Montar a data_check_string exatamente como veio
+  const dataCheckString: string = kv
+    .map(({ key, value }: KeyValue) => `${key}=${value}`)
     .join('\n')
 
-  // 3. Gere o secretKey correto:
-  //    HMAC_SHA256(key=BOT_TOKEN, msg="WebAppData") :contentReference[oaicite:0]{index=0}
-  const secretKey = crypto
-    .createHmac('sha256', BOT_TOKEN, { encoding: 'utf8' })
+  // 6. Gerar secretKey: HMAC_SHA256(key=BOT_TOKEN, msg="WebAppData")
+  const BOT_TOKEN: string = (process.env.BOT_TOKEN ?? '').trim()
+  const secretKey: Buffer = crypto
+    .createHmac('sha256', BOT_TOKEN)
     .update('WebAppData', 'utf8')
-    .digest()            // Buffer de 32 bytes
+    .digest()
 
-  // 4. Calcule o hash final:
-  //    HMAC_SHA256(key=secretKey, msg=dataCheckString)
-  const computedHash = crypto
+  // 7. Calcular o hash final: HMAC_SHA256(key=secretKey, msg=dataCheckString)
+  const computedHash: string = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString, 'utf8')
     .digest('hex')
 
-  // 5. Logs detalhados para HEX-debug
-  console.log('→ DEBUG TELEGRAM VALIDATION')
-  console.log('BOT_TOKEN   (utf8→hex):', Buffer.from(BOT_TOKEN, 'utf8').toString('hex'))
-  console.log('secretKey   (hex)      :', secretKey.toString('hex'))
-  console.log('data_check_string      :\n' + dataCheckString)
-  console.log('data_check_string (hex):', Buffer.from(dataCheckString, 'utf8').toString('hex'))
-  console.log('received hash (hex)    :', receivedHash)
-  console.log('computed hash (hex)    :', computedHash)
+  // 8. Extrair o hash recebido diretamente dos rawPairs
+  const rawHashPair: string | undefined = rawPairs.find(
+    (p: string) => p.startsWith('hash=')
+  )
+  const receivedHash: string | undefined = rawHashPair
+    ? rawHashPair.split('=')[1]
+    : undefined
 
-  // 6. Compare de forma segura
-  let match = false
-  try {
-    match =
-      receivedHash.length === computedHash.length &&
-      crypto.timingSafeEqual(
-        Buffer.from(receivedHash, 'hex'),
-        Buffer.from(computedHash, 'hex')
-      )
-  } catch {
-    match = false
+  if (!receivedHash) {
+    return NextResponse.json(
+      { ok: false, error: 'Missing hash' },
+      { status: 400 }
+    )
   }
 
-  // 7. Verifique expiração do auth_date (1 hora)
-  const authDate = parseInt(params.get('auth_date') || '0', 10)
-  const now = Math.floor(Date.now() / 1000)
-  const expired = now - authDate > 3600
+  // 9. Comparação segura dos hashes
+  const match: boolean =
+    receivedHash.length === computedHash.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(receivedHash, 'hex'),
+      Buffer.from(computedHash, 'hex')
+    )
+
+  console.log('→ DEBUG TELEGRAM VALIDATION (RAW)')
+  console.log('data_check_string:', dataCheckString)
+  console.log('received hash:', receivedHash)
+  console.log('computed hash:', computedHash)
+  console.log('match:', match)
 
   if (!match) {
     return NextResponse.json(
@@ -73,12 +92,23 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     )
   }
-  if (expired) {
+
+  // 10. Verificar expiração de auth_date (1h)
+  const authDateEntry: KeyValue | undefined = kv.find(
+    ({ key }: KeyValue) => key === 'auth_date'
+  )
+  const authDate: number = authDateEntry
+    ? parseInt(authDateEntry.value, 10)
+    : 0
+  const now: number = Math.floor(Date.now() / 1000)
+
+  if (now - authDate > 3600) {
     return NextResponse.json(
       { ok: false, verified: false, reason: 'auth_date expired' },
       { status: 403 }
     )
   }
 
+  // 11. Se chegou aqui, está tudo certo
   return NextResponse.json({ ok: true, verified: true })
 }
