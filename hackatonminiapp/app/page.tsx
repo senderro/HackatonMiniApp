@@ -1,85 +1,54 @@
-// frontend: app/page.tsx (Next.js App Router)
-'use client'
-import { useEffect, useState } from 'react'
+'use client';
+import { retrieveRawInitData } from '@telegram-apps/sdk';
+import { useEffect, useState } from 'react';
 
-type TelegramUser = {
-  id: number
-  first_name: string
-  last_name?: string
-  username?: string
-  photo_url?: string
-}
+type ValidationResponse = {
+  valid: boolean;
+  initData?: {
+    user?: {
+      first_name: string;
+      last_name?: string;
+      username?: string;
+      photo_url?: string;
+    };
+  };
+  error?: string;
+};
 
 export default function Home() {
-  const [user, setUser] = useState<TelegramUser | null>(null)
-  const [verified, setVerified] = useState<boolean | null>(null)
-  const [initData, setInitData] = useState<string | null>(null)
+  const [result, setResult] = useState<ValidationResponse | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    const raw = retrieveRawInitData();
+    fetch('/api/validate', {
+      method: 'POST',
+      headers: {
+        Authorization: `tma ${raw}`
+      }
+    })
+      .then(res => res.json())
+      .then((json: ValidationResponse) => setResult(json))
+      .catch(() => setResult({ valid: false }));
+  }, []);
 
-    const tg = (window as any).Telegram?.WebApp
-    const userData = tg?.initDataUnsafe?.user
-    const initDataRaw = tg?.initData
+  if (!result) return <div>Carregando...</div>;
+  if (!result.valid) return <div>Dados não confiáveis</div>;
 
-    if (initDataRaw) setInitData(initDataRaw)
-
-    if (userData) {
-      setUser(userData)
-      tg.ready()
-
-      fetch('/api/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: initDataRaw }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setVerified(data.verified ?? false)
-        })
-        .catch(() => setVerified(false))
-    }
-  }, [])
-
+  const user = result.initData?.user;
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-6">
-      <h1 className="text-2xl font-bold mb-4">Telegram Mini App</h1>
-
-      {user ? (
-        <>
-          <p>Olá, {user.first_name}!</p>
-          {user.photo_url && (
-            <img
-              src={user.photo_url}
-              alt="Avatar"
-              className="w-24 h-24 rounded-full mt-2"
-            />
-          )}
-
-          <div className="mt-4 w-full max-w-md">
-            <h2 className="text-lg font-semibold">🧾 Dados do Usuário</h2>
-            <pre className="text-sm bg-gray-100 p-2 rounded-md">
-              {JSON.stringify(user, null, 2)}
-            </pre>
-          </div>
-
-          <div className="mt-4 w-full max-w-md">
-            <h2 className="text-lg font-semibold">🔐 initData</h2>
-            <pre className="text-xs bg-yellow-100 p-2 rounded-md break-all">
-              {initData || 'initData não disponível'}
-            </pre>
-          </div>
-
-          <div className="mt-4">
-            {verified === true && <p className="text-green-600">✅ Usuário verificado</p>}
-            {verified === false && (
-              <p className="text-red-600">❌ Dados inválidos ou não verificados</p>
-            )}
-          </div>
-        </>
-      ) : (
-        <p>Carregando dados do Telegram...</p>
+    <div style={{ textAlign: 'center', padding: '2rem' }}>
+      {user?.photo_url && (
+        <img
+          src={user.photo_url}
+          alt="Foto do usuário"
+          style={{ borderRadius: '50%', width: 120, height: 120 }}
+        />
       )}
-    </main>
-  )
+      <h1>
+        {user?.first_name} {user?.last_name ?? ''}
+      </h1>
+      <p>Email: {user?.username ? `${user.username}@telegram.org` : '—'}</p>
+      <p style={{ fontWeight: 'bold' }}>Confiável: Sim</p>
+    </div>
+  );
 }
