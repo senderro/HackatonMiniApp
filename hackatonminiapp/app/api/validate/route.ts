@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
     .update(dataCheckString)
     .digest('hex')
 
-  const match = computedHash === receivedHash
+  const receivedHashBuffer = Buffer.from(receivedHash, 'hex')
+const computedHashBuffer = Buffer.from(computedHash, 'hex')
+const match =
+  receivedHashBuffer.length === computedHashBuffer.length &&
+  crypto.timingSafeEqual(receivedHashBuffer, computedHashBuffer)
 
   console.log('→ DEBUG TELEGRAM VALIDATION')
   console.log('data_check_string:', dataCheckString)
