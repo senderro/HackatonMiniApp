@@ -1,3 +1,4 @@
+// frontend: app/page.tsx (Next.js App Router)
 'use client'
 import { useEffect, useState } from 'react'
 
@@ -54,6 +55,7 @@ export default function Home() {
               className="w-24 h-24 rounded-full mt-2"
             />
           )}
+
           <div className="mt-4 w-full max-w-md">
             <h2 className="text-lg font-semibold">🧾 Dados do Usuário</h2>
             <pre className="text-sm bg-gray-100 p-2 rounded-md">

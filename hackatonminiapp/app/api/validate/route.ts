@@ -1,3 +1,4 @@
+// backend: pages/api/validate.ts (ou app/api/validate/route.ts se usar App Router)
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -7,39 +8,45 @@ export async function POST(req: NextRequest) {
   const { initData } = await req.json()
 
   if (!initData) {
-    return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 })
+    return NextResponse.json(
+      { ok: false, error: 'Missing initData' },
+      { status: 400 }
+    )
   }
 
   const params = new URLSearchParams(initData)
-
   const receivedHash = params.get('hash')
+
   if (!receivedHash) {
-    return NextResponse.json({ ok: false, error: 'Missing hash' }, { status: 400 })
+    return NextResponse.json(
+      { ok: false, error: 'Missing hash' },
+      { status: 400 }
+    )
   }
 
-  // 1. Remove os campos que não entram no cálculo
+  // Remover hash dos parâmetros antes de criar a string de verificação
   params.delete('hash')
-  params.delete('signature') // mesmo sendo para outro método
+  params.delete('signature') // para compatibilidade, caso exista
 
-  // 2. Monta o data_check_string corretamente
+  // Monta data_check_string: todos os pares key=value ordenados por key
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 
-  // 3. Gera o secret_key: HMAC_SHA256(bot_token, "WebAppData")
+  // Gera secretKey: HMAC_SHA256(key=BOT_TOKEN, message="WebAppData")
   const secretKey = crypto
-    .createHmac('sha256', 'WebAppData') // chave = "WebAppData"
-    .update(BOT_TOKEN)                 // mensagem = BOT_TOKEN
+    .createHmac('sha256', BOT_TOKEN)
+    .update('WebAppData')
     .digest()
 
-  // 4. Calcula o hash final: HMAC_SHA256(dataCheckString, secretKey)
+  // Calcula o hash final: HMAC_SHA256(key=secretKey, message=dataCheckString)
   const computedHash = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex')
 
-  // 5. Compara os hashes de forma segura
+  // Comparação segura dos hashes
   const match =
     receivedHash.length === computedHash.length &&
     crypto.timingSafeEqual(
@@ -52,20 +59,24 @@ export async function POST(req: NextRequest) {
   console.log('received hash:', receivedHash)
   console.log('computed hash:', computedHash)
   console.log('match:', match)
-  console.log('bot token:', BOT_TOKEN)
 
-  // 6. Verificação opcional: validade do timestamp
+  // Verifica validade do timestamp (1 hora)
   const authDate = parseInt(params.get('auth_date') || '0', 10)
   const now = Math.floor(Date.now() / 1000)
-  const ageInSeconds = now - authDate
-  const expired = ageInSeconds > 3600 // 1 hora
+  const expired = now - authDate > 3600
 
   if (!match) {
-    return NextResponse.json({ ok: false, verified: false, reason: 'hash mismatch' }, { status: 403 })
+    return NextResponse.json(
+      { ok: false, verified: false, reason: 'hash mismatch' },
+      { status: 403 }
+    )
   }
 
   if (expired) {
-    return NextResponse.json({ ok: false, verified: false, reason: 'auth_date expired' }, { status: 403 })
+    return NextResponse.json(
+      { ok: false, verified: false, reason: 'auth_date expired' },
+      { status: 403 }
+    )
   }
 
   return NextResponse.json({ ok: true, verified: true })
