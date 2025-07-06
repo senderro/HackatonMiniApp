@@ -17,28 +17,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing hash' }, { status: 400 })
   }
 
-  // REMOVE hash e signature para cálculo
+  // Remover o hash e qualquer assinatura extra
   params.delete('hash')
-  params.delete('signature') // ← esse aqui é importante!
+  params.delete('signature')
 
-  // Ordena alfabeticamente e monta a data_check_string
+  // Ordenar os parâmetros e montar a data_check_string
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, val]) => `${key}=${val}`)
     .join('\n')
 
-  // Gera HMAC com o bot token
-  const secretKey = crypto.createHash('sha256').update(BOT_TOKEN).digest()
+  // Geração correta da chave secreta (key = 'WebAppData', mensagem = BOT_TOKEN)
+  const secretKey = crypto
+    .createHmac('sha256', 'WebAppData')
+    .update(BOT_TOKEN)
+    .digest()
+
+  // Calcular hash do data_check_string usando a chave correta
   const computedHash = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex')
 
+  // Comparação segura dos hashes
   const receivedHashBuffer = Buffer.from(receivedHash, 'hex')
-const computedHashBuffer = Buffer.from(computedHash, 'hex')
-const match =
-  receivedHashBuffer.length === computedHashBuffer.length &&
-  crypto.timingSafeEqual(receivedHashBuffer, computedHashBuffer)
+  const computedHashBuffer = Buffer.from(computedHash, 'hex')
+  const match =
+    receivedHashBuffer.length === computedHashBuffer.length &&
+    crypto.timingSafeEqual(receivedHashBuffer, computedHashBuffer)
 
   console.log('→ DEBUG TELEGRAM VALIDATION')
   console.log('data_check_string:', dataCheckString)
