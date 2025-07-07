@@ -2,17 +2,26 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { HiHome, HiPlusCircle, HiUser } from 'react-icons/hi';
+import { useEffect, useState } from 'react';
 
 const tabs = [
   { label: 'Grupos', icon: HiHome, href: '/' },
-  { label: 'Nova', icon: HiPlusCircle, href: '/new' },
+  { label: 'Nova',   icon: HiPlusCircle, href: '/new' },
   { label: 'Perfil', icon: HiUser, href: '/profile' },
 ];
 
 export default function TabBar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const insetBottom = window.Telegram?.WebApp?.safeAreaInset.bottom ?? 0;
+  const router   = useRouter();
+  const [insetBottom, setInsetBottom] = useState(0);
+
+  useEffect(() => {
+    // roda só no cliente, evitando SSR errors
+    if (typeof window !== 'undefined') {
+      const wb = window.Telegram?.WebApp?.safeAreaInset;
+      setInsetBottom(wb?.bottom ?? 0);
+    }
+  }, []);
 
   return (
     <nav
