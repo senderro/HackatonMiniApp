@@ -35,7 +35,7 @@ export default function Home() {
         setError('Falha ao carregar suas bags.');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [raw]);
 
   if (loading) return <p className="p-4">Carregando...</p>;
   if (error)   return <p className="p-4 text-red-500">{error}</p>;
