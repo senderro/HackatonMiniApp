@@ -15,26 +15,40 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [raw, setRaw] = useState<string | null>(null);
 
   useEffect(() => {
-    // Pega o initData do Telegram Client ou da query string
-    const webApp = (window as any).Telegram?.WebApp;
-    const rawData = webApp?.initData || new URLSearchParams(window.location.search).get('initData') || '';
-    if (!rawData) return;
+  const webApp = (window as any).Telegram?.WebApp;
 
-    fetch('/api/validate', {
-      method: 'POST',
-      headers: { authorization: `tma ${rawData}` }
+  console.log('WebApp objeto:', webApp);
+  if (webApp) {
+    webApp.ready();
+  }
+
+  const rawData =
+    (webApp as any)?.initData ||
+    new URLSearchParams(window.location.search).get('initData') ||
+    '';
+
+  console.log('RawData capturado:', rawData);
+
+  if (!rawData) return;
+
+  console.log('Chamando /api/validate com:', rawData);
+  fetch('/api/validate', {
+    method: 'POST',
+    headers: { authorization: `tma ${rawData}` }
+  })
+    .then(res => {
+      console.log('/api/validate response status', res.status);
+      return res.json();
     })
-      .then(res => res.json())
-      .then((data: { valid: boolean; initData?: InitData }) => {
-        if (data.valid && data.initData) {
-          setInitData(data.initData);
-          setRaw(rawData);
-        } else {
-          console.error('Telegram initData validation failed', data);
-        }
-      })
-      .catch(err => console.error('Validation request error', err));
-  }, []);
+    .then(data => {
+      console.log('/api/validate JSON', data);
+      if (data.valid && data.initData) {
+        setInitData(data.initData);
+        setRaw(rawData);
+      }
+    })
+    .catch(err => console.error('Validation request error', err));
+}, []);
 
   return (
     <TelegramContext.Provider value={{ initData, raw }}>
