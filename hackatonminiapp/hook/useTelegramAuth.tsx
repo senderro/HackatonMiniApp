@@ -17,7 +17,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Pega o initData do Telegram Client ou da query string
     const webApp = (window as any).Telegram?.WebApp;
-    const rawData = webApp?.initDataUnsafe || new URLSearchParams(window.location.search).get('initData') || '';
+    const rawData = webApp?.initData || new URLSearchParams(window.location.search).get('initData') || '';
     if (!rawData) return;
 
     fetch('/api/validate', {
