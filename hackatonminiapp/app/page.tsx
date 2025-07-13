@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { HiChevronRight } from 'react-icons/hi';
 import { apiFetch } from './utils/apiFetch';
+import { useTelegram } from '@/hook/useTelegramAuth';
 
 
 type Group = {
@@ -12,11 +13,13 @@ type Group = {
 };
 
 export default function Home() {
+   const { raw } = useTelegram();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
   useEffect(() => {
+    if (!raw) return;  
     setLoading(true);
     apiFetch('/api/userBags')
       .then(res => {
