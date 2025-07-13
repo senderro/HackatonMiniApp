@@ -8,9 +8,6 @@ export async function POST(request: Request) {
   const [authType, initDataRaw = ''] = authHeader.split(' ');
 
   if (authType !== 'tma' || !initDataRaw) {
-    console.log(authHeader);
-    console.log(authType);
-    console.log(initDataRaw);
     return NextResponse.json({ valid: false }, { status: 401 });
   }
 
@@ -23,7 +20,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ valid: true, initData });
   } catch (e: any) {
-    console.error('Auth error:', e);
     return NextResponse.json({ valid: false, error: e.message }, { status: 400 });
   }
 }

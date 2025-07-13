@@ -1,56 +1,28 @@
 'use client';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { HiChevronRight }     from 'react-icons/hi';
-import { useApiFetch } from './utils/useApiFetch';
-import { useTelegram } from '@/hook/useTelegramAuth';
 
-type Group = { id: string; name: string; balance: number };
+import { useTelegram } from '@/contexts/TelegramContext';
 
-export default function Home() {
-  const { raw }       = useTelegram();
-  const apiFetch      = useApiFetch();
-  const [groups, setGroups]   = useState<Group[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+export default function HomePage() {
+  const { initData, error, loading } = useTelegram();
 
-  useEffect(() => {
-    if (!raw) return;            // espera validar initData
-    setLoading(true);
+  if (loading) {
+    return <p>Carregando dados do Telegram…</p>;
+  }
+  if (error) {
+    return <p className="text-red-600">Erro: {error}</p>;
+  }
+  if (!initData) {
+    return <p>Nenhum dado encontrado.</p>;
+  }
 
-    apiFetch('/api/userBags')
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        setGroups(data.bags);
-        setError(null);
-      })
-      .catch(() => setError('Falha ao carregar suas bags.'))
-      .finally(() => setLoading(false));
-  }, [raw, apiFetch]);
-
-  if (loading) return <p className="p-4">Carregando...</p>;
-  if (error)   return <p className="p-4 text-red-500">{error}</p>;
-  if (groups.length === 0) return <p className="p-4">Você não está em nenhuma bag ainda.</p>;
+  const { user } = initData; // initData.user contém id, first_name, last_name?, username?, language_code
 
   return (
-    <div className="p-4 space-y-4">
-      {groups.map(g => (
-        <Link key={g.id} href={`/group/${g.id}`} className="bg-white rounded-lg shadow p-4 flex justify-between items-center hover:shadow-md">
-          <div>
-            <h2 className="font-semibold text-lg">{g.name}</h2>
-            <p className="text-sm text-gray-500">Detalhes do grupo</p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className={`font-semibold ${g.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              R$ {g.balance.toFixed(2)}
-            </span>
-            <HiChevronRight />
-          </div>
-        </Link>
-      ))}
+    <div className="p-4 space-y-2">
+      <h1 className="text-xl font-semibold">Olá, {user.first_name}!</h1>
+      <p>Username: @{user.username ?? 'não informado'}</p>
+      <p>ID: {user.id}</p>
+      <p>Idioma: {user.language_code}</p>
     </div>
   );
 }

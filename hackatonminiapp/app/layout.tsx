@@ -1,16 +1,18 @@
+// app/layout.tsx (ou pages/_app.tsx, dependendo da sua estrutura)
+'use client';
+
 import './globals.css';
 import { ReactNode } from 'react';
+import { TelegramProvider } from '@/contexts/TelegramContext';
 import TabBar from '@/components/TabBar';
-import { TelegramProvider } from '@/hook/useTelegramAuth';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <head />
       <body className="flex flex-col min-h-screen">
-        {/* Inicializa autenticação Telegram */}
+        {/* Agora envolvemos todo o layout dentro do Provider */}
         <TelegramProvider>
-          {/* Cabeçalho */}
           <header
             className="w-full py-4 text-center font-bold"
             style={{
@@ -20,11 +22,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           >
             SplitApp
           </header>
-
-          {/* Conteúdo principal */}
-          <main className="flex-1 overflow-auto">{children}</main>
-
-          {/* Navegação inferior */}
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
           <TabBar />
         </TelegramProvider>
       </body>
