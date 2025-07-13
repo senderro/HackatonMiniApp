@@ -2,17 +2,41 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { HiChevronRight } from 'react-icons/hi';
+import { apiFetch } from './utils/apiFetch';
 
-type Group = { id: string; name: string; balance: number };
+
+type Group = {
+  id:      string;
+  name:    string;
+  balance: number;
+};
 
 export default function Home() {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState<string | null>(null);
+
   useEffect(() => {
-    setGroups([
-      { id: '1', name: 'Almoço Amigos', balance: -25.5 },
-      { id: '2', name: 'Viagem SP', balance: 40 },
-    ]);
+    setLoading(true);
+    apiFetch('/api/userBags')
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setGroups(data.bags);
+        setError(null);
+      })
+      .catch(err => {
+        console.error(err);
+        setError('Falha ao carregar suas bags.');
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return <p className="p-4">Carregando...</p>;
+  if (error)   return <p className="p-4 text-red-500">{error}</p>;
+  if (groups.length === 0) return <p className="p-4">Você não está em nenhuma bag ainda.</p>;
 
   return (
     <div className="p-4 space-y-4">
@@ -27,7 +51,11 @@ export default function Home() {
             <p className="text-sm text-gray-500">Detalhes do grupo</p>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={`${g.balance >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>R$ {g.balance.toFixed(2)}</span>
+            <span
+              className={`font-semibold ${g.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+            >
+              R$ {g.balance.toFixed(2)}
+            </span>
             <HiChevronRight />
           </div>
         </Link>
