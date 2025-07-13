@@ -2,6 +2,8 @@
 import { withTelegramAuth } from '@/app/lib/requireAuth';
 import { NextResponse } from 'next/server';
 
+import { prisma } from '../../lib/prisma';
+
 
 export const GET = withTelegramAuth(async (req, initData) => {
   // 1) Garante que existe user no initData
