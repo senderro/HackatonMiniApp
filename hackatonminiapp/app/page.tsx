@@ -3,6 +3,7 @@
 import { useTelegram } from '@/contexts/TelegramContext';
 import { useEffect, useState } from 'react';
 import { telegramFetch } from './lib/telegramFetch';
+import { HiChevronRight } from 'react-icons/hi';
 
 interface Bag {
   id: number;
@@ -36,50 +37,78 @@ export default function HomePage() {
   }, [initData]);
 
   if (loading) {
-    return <p>Carregando dados do Telegram…</p>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Carregando dados do Telegram…</p>
+      </div>
+    );
   }
+
   if (error) {
-    return <p className="text-red-600">Erro: {error}</p>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-600">Erro: {error}</p>
+      </div>
+    );
   }
+
   if (!initData) {
-    return <p>Nenhum dado de usuário encontrado.</p>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Nenhum dado de usuário encontrado.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <section>
-        <h1 className="text-xl font-semibold">Olá, {initData.user.first_name}!</h1>
-        <p>Username: @{initData.user.username ?? 'não informado'}</p>
-        <p>ID: {initData.user.id}</p>
-        <p>Idioma: {initData.user.language_code}</p>
-      </section>
+    <div className="space-y-6">
+      {/* Boas-vindas num card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 space-y-2">
+        <h1 className="text-2xl font-semibold">Olá, {initData.user.first_name}!</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          @{initData.user.username ?? 'não informado'}
+        </p>
+      </div>
 
-      <section>
+      {/* Lista de Bags */}
+      <div className="space-y-2">
         <h2 className="text-lg font-medium">Minhas Bags</h2>
 
-        {bagsLoading && <p>Carregando suas bags…</p>}
+        {bagsLoading && (
+          <div className="flex items-center justify-center py-6">
+            <p className="text-gray-500">Carregando suas bags…</p>
+          </div>
+        )}
+
         {bagsError && (
-          <p className="text-red-600">Erro ao carregar bags: {bagsError}</p>
+          <div className="p-4 bg-red-50 rounded-lg">
+            <p className="text-red-600">Erro ao carregar bags: {bagsError}</p>
+          </div>
         )}
 
         {!bagsLoading && bags && bags.length > 0 && (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {bags.map(bag => (
               <li
                 key={bag.id}
-                className="border rounded p-3 hover:shadow"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-shadow p-4 flex justify-between items-center"
               >
-                <h3 className="font-semibold text-md">{bag.name}</h3>
-                <p className="text-sm text-gray-500">ID: {bag.id}</p>
+                <div className="space-y-1">
+                  <h3 className="text-md font-semibold">{bag.name}</h3>
+                  <p className="text-xs text-gray-400">Criada em {new Date(bag.created_at).toLocaleDateString()}</p>
+                </div>
+                <HiChevronRight className="text-gray-400" />
               </li>
             ))}
           </ul>
         )}
 
         {!bagsLoading && bags && bags.length === 0 && (
-          <p>Você não participa de nenhuma bag.</p>
+          <div className="flex items-center justify-center py-6">
+            <p className="text-gray-500">Você não participa de nenhuma bag.</p>
+          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }
