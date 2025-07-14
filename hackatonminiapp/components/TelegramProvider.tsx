@@ -2,24 +2,6 @@
 
 import { useEffect } from 'react';
 
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: {
-        ready: () => void;
-        themeParams: {
-          bg_color: string;
-          section_bg_color: string;
-          text_color: string;
-        };
-        safeAreaInset: {
-          top: number;
-          bottom: number;
-        };
-      };
-    };
-  }
-}
 
 export default function TelegramProvider() {
   useEffect(() => {
