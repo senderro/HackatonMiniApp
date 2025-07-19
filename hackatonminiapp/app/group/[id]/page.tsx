@@ -1,4 +1,6 @@
 'use client';
+
+import { telegramFetch } from '../../lib/telegramFetch';
 import MemberCard from '@/components/MemberCard';
 import TransactionItem from '@/components/TransactionItem';
 import { useParams } from 'next/navigation';
@@ -9,26 +11,48 @@ export default function GroupDetail() {
   const { id } = useParams();
   const [members, setMembers] = useState<any[]>([]);
   const [txs, setTxs] = useState<any[]>([]);
+  const [bagName, setBagName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    setMembers([
-      { id: 'u1', name: 'João', balance: -10 },
-      { id: 'u2', name: 'Maria', balance: 5 },
-      { id: 'u3', name: 'Você', balance: 5 },
-    ]);
-    setTxs([
-      { id: 't1', description: 'Pizza no Centro', amount: 30, from: 'João', to: 'Maria' },
-      { id: 't2', description: 'Táxi aeroporto', amount: 15, from: 'Você', to: 'João' },
-    ]);
+    async function fetchBagDetails() {
+      try {
+        const res = await telegramFetch(`/api/bagDetails?id=${id}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao carregar detalhes da bag');
+        setBagName(data.name);
+        setMembers(data.members); // Expects members with `total_spent`
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBagDetails();
   }, [id]);
+
+  if (loading) return <p>Carregando detalhes da bag...</p>;
+  if (error) return <p>Erro: {error}</p>;
 
   return (
     <div className="p-4 space-y-6">
+      <h1 className="text-2xl font-semibold">{bagName}</h1>
       <div className="grid grid-cols-3 gap-3">
         {members.map(m => <MemberCard key={m.id} member={m} highlight={m.id === 'u3'} />)}
       </div>
       <div className="space-y-4">
         {txs.map(t => <TransactionItem key={t.id} tx={t} />)}
       </div>
+      <ul className="space-y-3">
+        {members.map(member => (
+          <li key={member.id} className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+            <h3 className="text-md font-semibold">{member.name}</h3>
+            <p className="text-sm text-gray-500">Total gasto: R$ {member.total_spent.toFixed(2)}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useTelegram } from '@/contexts/TelegramContext';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { telegramFetch } from './lib/telegramFetch';
 import { HiChevronRight } from 'react-icons/hi';
 
@@ -19,9 +20,10 @@ export default function HomePage() {
   const [bags, setBags] = useState<Bag[] | null>(null);
   const [bagsLoading, setBagsLoading] = useState(false);
   const [bagsError, setBagsError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!initData) return;    // só busca quando tivermos initData
+    if (!initData) return; // só busca quando tivermos initData
     setBagsLoading(true);
 
     telegramFetch('/api/userBags')
@@ -91,7 +93,8 @@ export default function HomePage() {
             {bags.map(bag => (
               <li
                 key={bag.id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-shadow p-4 flex justify-between items-center"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-shadow p-4 flex justify-between items-center cursor-pointer"
+                onClick={() => router.push(`/group/${bag.id}`)} // Redireciona para a página de detalhes
               >
                 <div className="space-y-1">
                   <h3 className="text-md font-semibold">{bag.name}</h3>
