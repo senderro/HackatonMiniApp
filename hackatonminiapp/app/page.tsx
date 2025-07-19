@@ -3,7 +3,6 @@
 import { useTelegram } from '@/contexts/TelegramContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { telegramFetch } from './lib/telegramFetch';
 import { HiChevronRight } from 'react-icons/hi';
 
 interface Bag {
@@ -23,10 +22,33 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      // Simulação de dados no ambiente de desenvolvimento
+      const simulatedBags: Bag[] = [
+        {
+          id: 11,
+          name: 'Bag Simulada 1',
+          chat_id: '987654',
+          admin_user_id: '123456',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          name: 'Bag Simulada 2',
+          chat_id: '654321',
+          admin_user_id: '654321',
+          created_at: new Date().toISOString(),
+        },
+      ];
+      setBags(simulatedBags);
+      setBagsLoading(false);
+      return;
+    }
+
     if (!initData) return; // só busca quando tivermos initData
     setBagsLoading(true);
 
-    telegramFetch('/api/userBags')
+    fetch('/api/userBags')
       .then(async res => {
         const payload = await res.json();
         if (!res.ok) {
@@ -54,7 +76,7 @@ export default function HomePage() {
     );
   }
 
-  if (!initData) {
+  if (!initData && process.env.NODE_ENV !== 'development') {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-gray-500">Nenhum dado de usuário encontrado.</p>
@@ -66,9 +88,9 @@ export default function HomePage() {
     <div className="space-y-6">
       {/* Boas-vindas num card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 space-y-2">
-        <h1 className="text-2xl font-semibold">Olá, {initData.user.first_name}!</h1>
+        <h1 className="text-2xl font-semibold">Olá, {initData?.user?.first_name || 'Usuário Simulado'}!</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          @{initData.user.username ?? 'não informado'}
+          @{initData?.user?.username ?? 'não informado'}
         </p>
       </div>
 

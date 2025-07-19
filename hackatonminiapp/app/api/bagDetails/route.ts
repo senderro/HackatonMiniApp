@@ -2,7 +2,7 @@ import { prisma } from '@/app/lib/prisma';
 import { withTelegramAuth } from '@/app/lib/requireAuth';
 import { NextResponse } from 'next/server';
 
-export const GET = withTelegramAuth(async (req, initData) => {
+const handler = async (req: Request) => {
     const url = new URL(req.url);
     const bagId = Number(url.searchParams.get('id'));
 
@@ -35,4 +35,7 @@ export const GET = withTelegramAuth(async (req, initData) => {
         name: bag.name,
         members,
     });
-});
+};
+
+// Aplica `withTelegramAuth` em qualquer ambiente diferente de `development`
+export const GET = process.env.NODE_ENV !== 'development' ? withTelegramAuth(handler) : handler;

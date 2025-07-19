@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@noble/ed25519": "^2.3.0",
-    "@prisma/client": "^6.11.1",
+    "@prisma/client": "^6.12.0",
     "@telegram-apps/init-data-node": "^2.0.10",
     "@telegram-apps/sdk": "^3.11.4",
     "@telegram-apps/sdk-react": "^3.3.6",

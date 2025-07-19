@@ -6,7 +6,6 @@ import TransactionItem from '@/components/TransactionItem';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-
 export default function GroupDetail() {
   const { id } = useParams();
   const [members, setMembers] = useState<any[]>([]);
@@ -18,7 +17,15 @@ export default function GroupDetail() {
   useEffect(() => {
     async function fetchBagDetails() {
       try {
-        const res = await telegramFetch(`/api/bagDetails?id=${id}`);
+        let res;
+        if (process.env.NODE_ENV === 'development') {
+          // Ambiente de desenvolvimento: usa fetch diretamente
+          res = await fetch(`/api/bagDetails?id=${id}`);
+        } else {
+          // Ambiente de produção: usa telegramFetch
+          res = await telegramFetch(`/api/bagDetails?id=${id}`);
+        }
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erro ao carregar detalhes da bag');
         setBagName(data.name);
@@ -40,10 +47,14 @@ export default function GroupDetail() {
     <div className="p-4 space-y-6">
       <h1 className="text-2xl font-semibold">{bagName}</h1>
       <div className="grid grid-cols-3 gap-3">
-        {members.map(m => <MemberCard key={m.id} member={m} highlight={m.id === 'u3'} />)}
+        {members.map(m => (
+          <MemberCard key={m.id} member={m} highlight={m.id === 'u3'} />
+        ))}
       </div>
       <div className="space-y-4">
-        {txs.map(t => <TransactionItem key={t.id} tx={t} />)}
+        {txs.map(t => (
+          <TransactionItem key={t.id} tx={t} />
+        ))}
       </div>
       <ul className="space-y-3">
         {members.map(member => (
