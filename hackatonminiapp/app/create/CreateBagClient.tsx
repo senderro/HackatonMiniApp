@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -6,18 +6,17 @@ import { useTelegram } from '@/contexts/TelegramContext';
 import { telegramFetch } from '../lib/telegramFetch';
 
 export default function CreateBagClient() {
-  const params = useSearchParams();
-  const chatId = params.get('chat_id');
-  const msgId = params.get('msg_id');
+  const params  = useSearchParams();
+  const chatId  = params.get('chat_id');
   const adminId = params.get('admin_id');
 
   const { initData, loading } = useTelegram();
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [name, setName]     = useState('');
+  const [error, setError]   = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (loading) return <p>Carregando…</p>;
-  if (!initData || !initData.user) {
+  if (!initData?.user) {
     return <p className="text-red-600">Erro: dados do usuário não encontrados.</p>;
   }
   if (initData.user.id.toString() !== adminId) {
@@ -35,7 +34,6 @@ export default function CreateBagClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: Number(chatId),
-          message_id: Number(msgId),
           name,
         }),
       });
