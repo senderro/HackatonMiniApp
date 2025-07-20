@@ -16,7 +16,7 @@ interface Bag {
 }
 
 export default function HomePage() {
-  const { initData, error, loading } = useTelegram();
+  const { initData, error, loading, themeParams } = useTelegram();
   const [bags, setBags] = useState<Bag[] | null>(null);
   const [bagsLoading, setBagsLoading] = useState(false);
   const [bagsError, setBagsError] = useState<string | null>(null);
@@ -41,7 +41,13 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Carregando dados do Telegram…</p>
+        <p
+          style={{
+            color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
+          }}
+        >
+          Carregando dados do Telegram…
+        </p>
       </div>
     );
   }
@@ -49,7 +55,13 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-red-600">Erro: {error}</p>
+        <p
+          style={{
+            color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
+          }}
+        >
+          Erro: {error}
+        </p>
       </div>
     );
   }
@@ -57,31 +69,62 @@ export default function HomePage() {
   if (!initData) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Nenhum dado de usuário encontrado.</p>
+        <p
+          style={{
+            color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
+          }}
+        >
+          Nenhum dado de usuário encontrado.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className="p-4 space-y-6 min-h-screen"
+      style={{
+        backgroundColor: themeParams?.bg_color || '#000000', // Usa o bg_color do Telegram ou preto como padrão
+        color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
+      }}
+    >
       {/* Boas-vindas num card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 space-y-2">
-        <h1 className="text-2xl font-semibold">Olá, {initData.user.first_name}!</h1>
+      <div className="bg-gradient-to-l from-slate-900 to-blue-900 rounded-2xl shadow-lg p-4 space-y-2">
+        <h1 className="text-2xl font-bold text-white">Olá, {initData.user.first_name}!</h1> {/* Sempre branco */}
       </div>
 
       {/* Lista de Bags */}
-      <div className="space-y-2">
-        <h2 className="text-lg font-medium">Minhas Bags</h2>
+      <div className="space-y-4">
+        <h2
+          className="text-lg font-semibold"
+          style={{
+            color: themeParams?.text_color || '#FFFFFF', // Garante que o texto acompanhe o tema
+          }}
+        >
+          Minhas Bags
+        </h2>
 
         {bagsLoading && (
           <div className="flex items-center justify-center py-6">
-            <p className="text-gray-500">Carregando suas bags…</p>
+            <p
+              style={{
+                color: themeParams?.text_color || '#FFFFFF', // Garante que o texto acompanhe o tema
+              }}
+            >
+              Carregando suas bags…
+            </p>
           </div>
         )}
 
         {bagsError && (
-          <div className="p-4 bg-red-50 rounded-lg">
-            <p className="text-red-600">Erro ao carregar bags: {bagsError}</p>
+          <div className="p-4 bg-gradient-to-r from-red-500 to-red-700 rounded-lg shadow-md">
+            <p
+              style={{
+                color: themeParams?.text_color || '#FFFFFF', // Garante que o texto acompanhe o tema
+              }}
+            >
+              Erro ao carregar bags: {bagsError}
+            </p>
           </div>
         )}
 
@@ -90,14 +133,14 @@ export default function HomePage() {
             {bags.map(bag => (
               <li
                 key={bag.id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-shadow p-4 flex justify-between items-center cursor-pointer"
-                onClick={() => router.push(`/group/${bag.id}`)} // Redireciona para a página de detalhes
+                className="bg-gradient-to-r from-blue-800 to-indigo-900 shadow-sm rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex justify-between items-center cursor-pointer"
+                onClick={() => router.push(`/group/${bag.id}`)} // Mantém o redirecionamento
               >
                 <div className="space-y-1">
-                  <h3 className="text-md font-semibold">{bag.name}</h3>
-                  <p className="text-xs text-gray-400">Criada em {new Date(bag.created_at).toLocaleDateString()}</p>
+                  <h3 className="text-md font-semibold text-white">{bag.name}</h3> {/* Texto fixo dentro do card */}
+                  <p className="text-xs text-gray-300">Criada em {new Date(bag.created_at).toLocaleDateString()}</p> {/* Texto fixo dentro do card */}
                 </div>
-                <HiChevronRight className="text-gray-400" />
+                <HiChevronRight className="text-gray-300" />
               </li>
             ))}
           </ul>
@@ -105,7 +148,13 @@ export default function HomePage() {
 
         {!bagsLoading && bags && bags.length === 0 && (
           <div className="flex items-center justify-center py-6">
-            <p className="text-gray-500">Você não participa de nenhuma bag.</p>
+            <p
+              style={{
+                color: themeParams?.text_color || '#FFFFFF', // Garante que o texto acompanhe o tema
+              }}
+            >
+              Você não participa de nenhuma bag.
+            </p>
           </div>
         )}
       </div>

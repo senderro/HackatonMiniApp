@@ -1,15 +1,21 @@
 'use client';
 
-export default function TransactionItem({ tx }: { tx: any }) {
+export default function TransactionItem({ tx, theme }: { tx: any; theme: 'dark' | 'light' }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow flex justify-between">
-      <div>
-        <h4 className="font-medium">{tx.message_text}</h4>
-        <p className="text-sm text-gray-400">Data: {new Date(tx.created_at).toLocaleDateString()}</p>
+    <div
+      className={`p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow flex flex-col space-y-2 ${
+        theme === 'dark'
+          ? 'bg-gradient-to-r from-gray-100 to-gray-300 text-gray-800' // Tema escuro corrigido
+          : 'bg-gradient-to-r from-neutral-700 to-neutral-900 text-white' // Tema claro corrigido
+      }`}
+    >
+      <h4 className="text-lg font-bold">{tx.message_text}</h4>
+      <div className="flex justify-between items-center text-sm">
+        <p>
+          Por: <span className="font-medium">{tx.user_name}</span>
+        </p>
+        <p>{new Date(tx.created_at).toLocaleDateString()}</p>
       </div>
-      <span className={`${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>
-        R$ {tx.amount !== undefined ? tx.amount.toFixed(2) : '0.00'}
-      </span>
     </div>
   );
 }

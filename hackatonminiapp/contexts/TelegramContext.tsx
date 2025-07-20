@@ -5,7 +5,6 @@ import { createContext, useContext, ReactNode, useEffect, useState } from 'react
 import { retrieveRawInitData, on } from '@telegram-apps/sdk';
 
 type InitData = any; // você pode trocar por uma interface mais precisa se quiser
-// agora ThemeParams aceita valores undefined
 type ThemeParams = Record<string, string | undefined>;
 
 interface TelegramContextValue {
@@ -85,3 +84,5 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 }
 
 export const useTelegram = () => useContext(TelegramContext);
+
+
