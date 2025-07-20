@@ -84,7 +84,7 @@ export default function HomePage() {
     <div
       className="p-4 space-y-6 min-h-screen"
       style={{
-        backgroundColor: themeParams?.bg_color || '#000000', // Usa o bg_color do Telegram ou preto como padrão
+        backgroundColor: '#000000', // Fundo preto fixo
         color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
       }}
     >
@@ -96,10 +96,7 @@ export default function HomePage() {
       {/* Lista de Bags */}
       <div className="space-y-4">
         <h2
-          className="text-lg font-semibold"
-          style={{
-            color: themeParams?.text_color || '#FFFFFF', // Garante que o texto acompanhe o tema
-          }}
+          className="text-lg font-semibold text-white" // Sempre branco
         >
           Minhas Bags
         </h2>

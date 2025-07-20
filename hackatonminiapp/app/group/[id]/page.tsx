@@ -30,9 +30,13 @@ export default function GroupDetail() {
         if (!res.ok) throw new Error(data.error || 'Erro ao carregar detalhes da bag');
         setBagName(data.name);
 
-        const sessionUserId = initData?.user?.id;
-        const sessionMember = data.members.find((m: any) => m.user_id === sessionUserId);
-        const otherMembers = data.members.filter((m: any) => m.user_id !== sessionUserId);
+        const sessionUserId = String(initData?.user?.id); // Converte para string para comparação
+
+        // Identifica o membro correspondente ao sessionUserId
+        const sessionMember = data.members.find((m: any) => m.id === sessionUserId);
+
+        // Filtra os outros membros, excluindo o sessionUserId
+        const otherMembers = data.members.filter((m: any) => m.id !== sessionUserId);
 
         if (sessionMember) {
           setMembers([sessionMember, ...otherMembers]);
@@ -58,12 +62,12 @@ export default function GroupDetail() {
     <div
       className="p-4 space-y-6 min-h-screen"
       style={{
-        backgroundColor: themeParams?.bg_color || '#000000', // Usa o bg_color do Telegram ou preto como padrão
-        color: themeParams?.text_color || '#FFFFFF', // Usa o text_color do Telegram ou branco como padrão
+        backgroundColor: '#000000', // Fundo preto fixo
+        color: '#FFFFFF', // Letras brancas fixas
       }}
     >
       {/* Nome da Bag com estilização */}
-      <h1 className="text-3xl font-bold text-center">{bagName}</h1>
+      <h1 className="text-3xl font-bold text-center text-white">{bagName}</h1> {/* Sempre branco */}
 
       {/* Card do usuário da sessão */}
       {members[0] && (
@@ -84,7 +88,7 @@ export default function GroupDetail() {
       </div>
 
       {/* Título das Transações */}
-      <h2 className="text-2xl font-semibold mt-6">Transações</h2>
+      <h2 className="text-2xl font-semibold mt-6 text-white">Transações</h2> {/* Sempre branco */}
 
       {/* Contêiner de transações */}
       <div className="space-y-4">
@@ -92,7 +96,7 @@ export default function GroupDetail() {
           <TransactionItem
             key={t.id}
             tx={t}
-            theme={themeParams?.theme === 'light' ? 'light' : 'dark'}
+            theme="dark" // Tema fixo como "dark"
           />
         ))}
       </div>
