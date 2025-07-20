@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 const tabs = [
   { label: 'Grupos', icon: HiHome, href: '/' },
   { label: 'Nova',   icon: HiPlusCircle, href: '/new' },
-  { label: 'Perfil', icon: HiUser, href: '/profile' },
+  { label: 'Perfil', icon: HiUser, href: '/testeContrato' },
 ];
 
 export default function TabBar() {
