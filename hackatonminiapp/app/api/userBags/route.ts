@@ -1,4 +1,3 @@
-// src/app/api/userBags/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '../../lib/prisma';
 import { withTelegramAuth } from '@/app/lib/requireAuth';
@@ -12,23 +11,22 @@ export const GET = withTelegramAuth(async (_req, initData) => {
       );
     }
 
-    const userId = BigInt(initData.user.id); // Obtém o ID do usuário autenticado
+    const userId = BigInt(initData.user.id);
 
-    // Busca apenas os bags associados ao usuário atual
-    const rawBags = await prisma.bags.findMany({
+    // Busca as bags em que o usuário participa
+    const rawBags = await prisma.bag.findMany({
       where: {
-        bag_users: {
+        participants: {
           some: {
-            user_id: userId, // Filtra pelos bags que possuem o usuário atual
+            user_id: userId,
           },
         },
       },
       include: {
-        bag_users: true,
+        participants: true,
       },
     });
 
-    // Converte todos os BigInt para string e Date para ISO
     const bags = rawBags.map(b => ({
       id: b.id,
       name: b.name,

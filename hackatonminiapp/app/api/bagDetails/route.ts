@@ -10,17 +10,17 @@ const handler = async (req: Request) => {
     return NextResponse.json({ error: 'ID da bag não fornecido' }, { status: 400 });
   }
 
-  const bag = await prisma.bags.findUnique({
+  const bag = await prisma.bag.findUnique({
     where: { id: bagId },
     include: {
-      bag_users: {
+      participants: {
         include: {
-          users: true,
+          user: true,
         },
       },
       transactions: {
         include: {
-          users: true, // Inclui os dados do usuário associado à transação
+          user: true,
         },
       },
     },
@@ -30,25 +30,24 @@ const handler = async (req: Request) => {
     return NextResponse.json({ error: 'Bag não encontrada' }, { status: 404 });
   }
 
-  const members = bag.bag_users.map(bu => ({
+  const members = bag.participants.map(bu => ({
     id: bu.user_id.toString(),
-    name: bu.users.first_name || bu.users.username || 'Usuário desconhecido',
+    name: bu.user.first_name || bu.user.username || 'Usuário desconhecido',
     total_spent: bu.total_spent || 0,
   }));
 
   const transactions = bag.transactions.map(tx => ({
     id: tx.id,
     message_text: tx.message_text,
-    user_name: tx.users.first_name || tx.users.username || 'Usuário desconhecido', // Nome do usuário
+    user_name: tx.user.first_name || tx.user.username || 'Usuário desconhecido',
     created_at: tx.created_at.toISOString(),
   }));
 
   return NextResponse.json({
     name: bag.name,
     members,
-    transactions, // Inclui as transações com o nome do usuário
+    transactions,
   });
 };
 
-// Aplica `withTelegramAuth` em qualquer ambiente diferente de `development`
 export const GET = process.env.NODE_ENV !== 'development' ? withTelegramAuth(handler) : handler;
