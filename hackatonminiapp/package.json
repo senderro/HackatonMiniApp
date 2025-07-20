@@ -3,11 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "prepare": "prisma generate && npm run contracts:compile && npm run contracts:gen",
-    "contracts:compile": "npx tact --config tact.config.json",
-    "contracts:gen": "npx blueprint build",
-    "dev": "npm run contracts:compile && npm run contracts:gen && next dev --turbopack",
-    "build": "npm run contracts:compile && npm run contracts:gen && next build",
+    "prepare": "prisma generate",
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
