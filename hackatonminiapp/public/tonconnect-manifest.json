@@ -1,5 +1,5 @@
 {
-  "url":         "http://localhost:3000",
+  "url":         "https://hackaton-mini-app-nine.vercel.app/",
   "name":        "Meu DApp TON",
-  "iconUrl":     "http://localhost:3000/teste.png"
+  "iconUrl":     "https://hackaton-mini-app-nine.vercel.app/"
 }
