@@ -2,7 +2,7 @@ import { prisma } from '@/app/lib/prisma';
 import { withTelegramAuth } from '@/app/lib/requireAuth';
 import { NextResponse } from 'next/server';
 
-const handler = async (req: Request) => {
+export const GET = withTelegramAuth(async (req: Request, initData: any) => {
   const url = new URL(req.url);
   const bagId = Number(url.searchParams.get('id'));
 
@@ -10,8 +10,13 @@ const handler = async (req: Request) => {
     return NextResponse.json({ error: 'ID da bag não fornecido' }, { status: 400 });
   }
 
+  if (!initData?.user?.id) {
+    return NextResponse.json({ error: 'Usuário não autenticado' }, { status: 401 });
+  }
+
   try {
-    // Valida se a bag existe e está aguardando pagamentos
+    const userId = BigInt(initData.user.id);
+
     const bag = await prisma.bag.findUnique({
       where: { id: bagId },
     });
@@ -20,7 +25,6 @@ const handler = async (req: Request) => {
       return NextResponse.json({ error: 'Bag inválida ou não está aguardando pagamentos' }, { status: 400 });
     }
 
-    // Busca cotação do TON (The Open Network) em BRL via CoinGecko
     const cotacaoResp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=brl');
     const cotacaoJson = await cotacaoResp.json();
     const cotacaoTON = cotacaoJson['the-open-network']?.brl;
@@ -29,11 +33,6 @@ const handler = async (req: Request) => {
       return NextResponse.json({ error: 'Erro ao obter cotação do TON' }, { status: 500 });
     }
 
-    // Obtém dados do usuário logado via Telegram Auth
-    const tgData = (req as any).telegramUser;
-    const userId = BigInt(tgData.id);
-
-    // Busca pagamentos pendentes para este usuário na bag
     const pendencias = await prisma.pendingPayment.findMany({
       where: {
         bag_id: bagId,
@@ -62,7 +61,4 @@ const handler = async (req: Request) => {
     console.error('[GET /pendingPayments]', err);
     return NextResponse.json({ error: 'Erro ao buscar pendências' }, { status: 500 });
   }
-};
-
-// Aplica autenticação exceto no ambiente de desenvolvimento
-export const GET = process.env.NODE_ENV !== 'development' ? withTelegramAuth(handler) : handler;
+});
