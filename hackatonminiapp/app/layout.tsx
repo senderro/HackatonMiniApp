@@ -6,6 +6,7 @@ import { ReactNode } from 'react';
 import { TelegramProvider } from '@/contexts/TelegramContext';
 import TabBar from '@/components/TabBar';
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
+import { ConnectWallet } from './testeContrato/ConnectWallet';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const manifestUrl = `${process.env.NEXT_PUBLIC_DAPP_URL}/tonconnect-manifest.json`;
@@ -35,6 +36,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Navegação inferior, respeitando safe-area */}
           <div className="pb-4 bg-white dark:bg-gray-800">
             <div className="max-w-md mx-auto w-full">
+                    <ConnectWallet />
+              
               <TabBar />
             </div>
           </div>
