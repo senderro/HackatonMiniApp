@@ -56,14 +56,7 @@ export default function GroupDetail() {
           <TransactionItem key={t.id} tx={t} />
         ))}
       </div>
-      <ul className="space-y-3">
-        {members.map(member => (
-          <li key={member.id} className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-            <h3 className="text-md font-semibold">{member.name}</h3>
-            <p className="text-sm text-gray-500">Total gasto: R$ {member.total_spent.toFixed(2)}</p>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
+

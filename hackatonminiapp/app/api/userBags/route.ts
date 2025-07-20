@@ -1,11 +1,28 @@
 // src/app/api/userBags/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '../../lib/prisma';
+import { withTelegramAuth } from '@/app/lib/requireAuth';
 
-export const GET = async (_req: Request) => {
+export const GET = withTelegramAuth(async (_req, initData) => {
   try {
-    // Busca todos os bags no banco de dados
+    if (!initData?.user) {
+      return NextResponse.json(
+        { error: 'Dados do usuário não encontrados' },
+        { status: 400 }
+      );
+    }
+
+    const userId = BigInt(initData.user.id); // Obtém o ID do usuário autenticado
+
+    // Busca apenas os bags associados ao usuário atual
     const rawBags = await prisma.bags.findMany({
+      where: {
+        bag_users: {
+          some: {
+            user_id: userId, // Filtra pelos bags que possuem o usuário atual
+          },
+        },
+      },
       include: {
         bag_users: true,
       },
@@ -31,4 +48,4 @@ export const GET = async (_req: Request) => {
       { status: 500 }
     );
   }
-};
+});

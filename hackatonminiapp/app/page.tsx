@@ -67,9 +67,6 @@ export default function HomePage() {
       {/* Boas-vindas num card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 space-y-2">
         <h1 className="text-2xl font-semibold">Olá, {initData.user.first_name}!</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          @{initData.user.username ?? 'não informado'}
-        </p>
       </div>
 
       {/* Lista de Bags */}

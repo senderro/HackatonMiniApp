@@ -18,6 +18,7 @@ const handler = async (req: Request) => {
                     users: true,
                 },
             },
+            transactions: true, // Inclui as transações relacionadas à bag
         },
     });
 
@@ -31,9 +32,17 @@ const handler = async (req: Request) => {
         total_spent: bu.total_spent || 0,
     }));
 
+    const transactions = bag.transactions.map(tx => ({
+        id: tx.id,
+        message_text: tx.message_text,
+        user_id: tx.user_id.toString(),
+        created_at: tx.created_at.toISOString(),
+    }));
+
     return NextResponse.json({
         name: bag.name,
         members,
+        transactions, // Retorna as transações associadas à bag
     });
 };
 
