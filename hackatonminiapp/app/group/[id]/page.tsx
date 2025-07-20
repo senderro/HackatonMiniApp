@@ -9,12 +9,15 @@ import { useTelegram } from '@/contexts/TelegramContext';
 
 export default function GroupDetail() {
   const { id } = useParams();
-  const { initData, themeParams } = useTelegram(); // Obtém os dados do usuário e os parâmetros de tema
+  const { initData } = useTelegram();
+
   const [members, setMembers] = useState<any[]>([]);
   const [txs, setTxs] = useState<any[]>([]);
   const [bagName, setBagName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [cotacaoTon, setCotacaoTon] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchBagDetails() {
@@ -30,12 +33,9 @@ export default function GroupDetail() {
         if (!res.ok) throw new Error(data.error || 'Erro ao carregar detalhes da bag');
         setBagName(data.name);
 
-        const sessionUserId = String(initData?.user?.id); // Converte para string para comparação
+        const sessionUserId = String(initData?.user?.id);
 
-        // Identifica o membro correspondente ao sessionUserId
         const sessionMember = data.members.find((m: any) => m.id === sessionUserId);
-
-        // Filtra os outros membros, excluindo o sessionUserId
         const otherMembers = data.members.filter((m: any) => m.id !== sessionUserId);
 
         if (sessionMember) {
@@ -45,6 +45,20 @@ export default function GroupDetail() {
         }
 
         setTxs(data.transactions);
+
+        // Busca pendências de pagamento
+        let resPagamentos;
+        if (process.env.NODE_ENV === 'development') {
+          resPagamentos = await fetch(`/api/pendingPayments?id=${id}`);
+        } else {
+          resPagamentos = await telegramFetch(`/api/pendingPayments?id=${id}`);
+        }
+
+        const pagamentosData = await resPagamentos.json();
+        if (resPagamentos.ok) {
+          setPendingPayments(pagamentosData.pagamentos);
+          setCotacaoTon(pagamentosData.cotacao_ton_brl);
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -62,21 +76,46 @@ export default function GroupDetail() {
     <div
       className="p-4 space-y-6 min-h-screen"
       style={{
-        backgroundColor: '#000000', // Fundo preto fixo
-        color: '#FFFFFF', // Letras brancas fixas
+        backgroundColor: '#000000',
+        color: '#FFFFFF',
       }}
     >
-      {/* Nome da Bag com estilização */}
-      <h1 className="text-3xl font-bold text-center text-white">{bagName}</h1> {/* Sempre branco */}
+      {/* Nome da Bag */}
+      <h1 className="text-3xl font-bold text-center text-white">{bagName}</h1>
 
-      {/* Card do usuário da sessão */}
+      {/* Pagamentos Pendentes */}
+      {pendingPayments.length > 0 && (
+        <div className="bg-white text-black rounded-xl p-4 space-y-3">
+          <h2 className="text-xl font-bold">💰 Você deve:</h2>
+          {pendingPayments.map((p, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center border border-gray-300 rounded-lg px-3 py-2"
+            >
+              <div>
+                <p className="font-medium">
+                  R$ {p.valor_brl.toFixed(2)} (≈ {p.valor_ton.toFixed(2)} TON)
+                </p>
+                <p className="text-sm text-gray-700">Para: {p.para.nome}</p>
+              </div>
+              <button
+                className="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                disabled
+              >
+                Pagar
+              </button>
+            </div>
+          ))}
+          <p className="text-xs text-gray-500 mt-1">
+            Cotação atual: 1 TON ≈ R$ {cotacaoTon?.toFixed(2)}
+          </p>
+        </div>
+      )}
+
+      {/* Card do usuário logado */}
       {members[0] && (
         <div className="mb-6">
-          <MemberCard
-            member={members[0]}
-            highlight={true}
-            fullWidth={true} // Passa uma prop para ocupar toda a largura
-          />
+          <MemberCard member={members[0]} highlight={true} fullWidth={true} />
         </div>
       )}
 
@@ -87,20 +126,14 @@ export default function GroupDetail() {
         ))}
       </div>
 
-      {/* Título das Transações */}
-      <h2 className="text-2xl font-semibold mt-6 text-white">Transações</h2> {/* Sempre branco */}
+      {/* Transações */}
+      <h2 className="text-2xl font-semibold mt-6 text-white">Transações</h2>
 
-      {/* Contêiner de transações */}
       <div className="space-y-4">
         {txs.map(t => (
-          <TransactionItem
-            key={t.id}
-            tx={t}
-            theme="dark" // Tema fixo como "dark"
-          />
+          <TransactionItem key={t.id} tx={t} theme="dark" />
         ))}
       </div>
     </div>
   );
 }
-
