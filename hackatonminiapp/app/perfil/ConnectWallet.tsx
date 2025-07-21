@@ -8,7 +8,7 @@ export function ConnectWallet() {
 
   return (
     <div className="flex flex-col items-start space-y-2">
-      <TonConnectButton />  
+      <TonConnectButton /> 
       {address && (
         <p className="text-sm">
           Conectado: {address}
