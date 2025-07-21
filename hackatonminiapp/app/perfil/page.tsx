@@ -2,21 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useTelegram } from "@/contexts/TelegramContext";
-import { TonConnectButton, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
+import { TonConnectButton, useTonAddress } from "@tonconnect/ui-react";
 import Image from "next/image";
+import { telegramFetch } from "@/app/lib/telegramFetch";
 
 export default function PerfilPage() {
   const { initData, loading, error, themeParams } = useTelegram();
   const [savedAddress, setSavedAddress] = useState<string | null>(null);
   const walletAddress = useTonAddress();
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [connectUI] = useTonConnectUI();
 
   // Busca a carteira salva no banco
   useEffect(() => {
     if (!initData?.user?.id) return;
 
-    fetch("/api/userWallet")
+    telegramFetch("/api/userWallet")
       .then(async (res) => {
         const json = await res.json();
         if (res.ok && json.address) {
@@ -31,9 +31,8 @@ export default function PerfilPage() {
     if (!walletAddress || !initData?.user?.id) return;
     if (walletAddress === savedAddress) return;
 
-    fetch("/api/saveWallet", {
+    telegramFetch("/api/saveWallet", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address: walletAddress }),
     })
       .then(async (res) => {
