@@ -34,24 +34,32 @@ export const GET = withTelegramAuth(async (req: Request, initData: any) => {
     }
 
     const pendencias = await prisma.pendingPayment.findMany({
-      where: {
-        bag_id: bagId,
-        user_id_from: userId,
-        pago: false,
-      },
-      include: {
-        recebedor: true,
-      },
-    });
+          where: {
+            bag_id: bagId,
+            user_id_from: userId,
+            pago: false,
+          },
+          include: {
+            recebedor: {
+              select: {
+                first_name: true,
+                username:    true,
+                wallet_address: true,
+              },
+            },
+          },
+        });
+
 
     const pagamentos = pendencias.map(p => ({
-      valor_brl: parseFloat(p.valor.toString()),
-      valor_ton: parseFloat((parseFloat(p.valor.toString()) / cotacaoTON).toFixed(3)),
-      para: {
-        id: p.user_id_to.toString(),
-        nome: p.recebedor.first_name || p.recebedor.username || 'Participante',
-      },
-    }));
+        valor_brl: parseFloat(p.valor.toString()),
+        valor_ton: parseFloat((parseFloat(p.valor.toString()) / cotacaoTON).toFixed(3)),
+        para: {
+          id:    p.user_id_to.toString(),
+          nome:  p.recebedor.first_name || p.recebedor.username || 'Participante',
+          wallet: p.recebedor.wallet_address, 
+        },
+      }));
 
     return NextResponse.json({
       pagamentos,

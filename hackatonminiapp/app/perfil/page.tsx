@@ -15,7 +15,7 @@ export default function PerfilPage() {
   // Busca a carteira salva no banco
   useEffect(() => {
     if (!initData?.user?.id) return;
-
+    setStatusMessage("");
     telegramFetch("/api/userWallet")
       .then(async (res) => {
         const json = await res.json();
