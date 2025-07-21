@@ -81,6 +81,8 @@ model PendingPayment {
   valor          Decimal   @db.Decimal(10, 2)
   pago           Boolean   @default(false)
   data_pagamento DateTime?
+  txHash         String?   
+  pollAttempts   Int       @default(0)
   bag            Bag       @relation(fields: [bag_id], references: [id], onDelete: Cascade)
   devedor        User      @relation("Pagador", fields: [user_id_from], references: [id], onDelete: Cascade)
   recebedor      User      @relation("Recebedor", fields: [user_id_to], references: [id], onDelete: Cascade)
