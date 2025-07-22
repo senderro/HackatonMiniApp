@@ -2,16 +2,11 @@ import { NextResponse }     from 'next/server';
 import { withTelegramAuth } from '@/app/lib/requireAuth';
 import { prisma }           from '@/app/lib/prisma';
 
-export const POST = withTelegramAuth(async (req: Request, initData: any) => {
+export async function  POST(req: Request) {
   const { pendingPaymentId, inMessageBoc } = await req.json();
-   let body: any;
-  try {
-    body = await req.clone().json();
-  } catch (e) {
-    console.error('markPaid: erro ao fazer clone().json()', e);
-    return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 });
-  }
-  console.log('📥 /api/markPaid recebeu:', body);
+  console.log(pendingPaymentId);
+  console.log(inMessageBoc);
+  
   if (!pendingPaymentId || typeof inMessageBoc !== 'string') {
     return NextResponse.json(
       { error: 'pendingPaymentId e inMessageBoc são necessários' },
@@ -33,4 +28,4 @@ export const POST = withTelegramAuth(async (req: Request, initData: any) => {
       { status: 500 }
     );
   }
-});
+}

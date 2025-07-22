@@ -136,14 +136,14 @@ export default function GroupDetail() {
     }
 
     // 3.3) register with backend; worker fará polling
-    const markRes = await telegramFetch('/api/markPaid', {
+    const markRes = await fetch('/api/markPaid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pendingPaymentId: p.id,
         inMessageBoc,
       }),
-    });
+    })
     if (!markRes.ok) {
       console.error(await markRes.text());
       alert('❌ Erro ao registrar pagamento. Tente novamente.');
