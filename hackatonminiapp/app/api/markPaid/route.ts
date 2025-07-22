@@ -4,7 +4,14 @@ import { prisma }           from '@/app/lib/prisma';
 
 export const POST = withTelegramAuth(async (req: Request, initData: any) => {
   const { pendingPaymentId, inMessageBoc } = await req.json();
-
+   let body: any;
+  try {
+    body = await req.json();
+  } catch (e) {
+    console.error('markPaid: erro ao fazer req.json()', e);
+    return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 });
+  }
+  console.log('📥 /api/markPaid recebeu:', body);
   if (!pendingPaymentId || typeof inMessageBoc !== 'string') {
     return NextResponse.json(
       { error: 'pendingPaymentId e inMessageBoc são necessários' },
