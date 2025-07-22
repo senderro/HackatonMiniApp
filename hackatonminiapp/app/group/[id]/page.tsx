@@ -172,6 +172,7 @@ export default function GroupDetail() {
         <div className="bg-white text-black rounded-xl p-4 space-y-3">
           <h2 className="text-xl font-bold">💰 Você deve:</h2>
           {pendingPayments.map((p, idx) => {
+            const disabled = !walletAddress || p.txHash || p.user_to_address;
             const feeBrl   = p.valor_brl * feeNum / feeDen;
             const totalBrl = p.valor_brl + feeBrl;
             const totalTon = p.valor_ton * (1 + feeNum/feeDen);
@@ -186,7 +187,7 @@ export default function GroupDetail() {
                 </div>
                 <button
                   onClick={() => handlePay(p)}
-                  disabled={!walletAddress}
+                  disabled={disabled}
                   className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                 >
                   Pagar

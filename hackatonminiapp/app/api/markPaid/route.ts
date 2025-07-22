@@ -13,6 +13,23 @@ export async function  POST(req: Request) {
       { status: 400 }
     );
   }
+  // Busca registro atual
+  const existing = await prisma.pendingPayment.findUnique({
+    where: { id: pendingPaymentId },
+    select: { txHash: true, user_to_address: true }
+  });
+  if (!existing) {
+     return NextResponse.json(
+      { error: 'Falha ao registrar pendingPayment ' },
+      { status: 404 }
+    );
+  }
+  if (existing.txHash || existing.user_to_address) {
+    return NextResponse.json(
+      { error: 'Pagamento já em andamento ou confirmado' },
+      { status: 404 }
+    );
+  }
 
   try {
     // Só salva o BOC da mensagem; o worker vai confirmar on‐chain e marcar pago
