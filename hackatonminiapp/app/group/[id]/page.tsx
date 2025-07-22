@@ -127,7 +127,7 @@ export default function GroupDetail() {
         payload: bodyCell.toBoc().toString('base64'),
       }],
     });
-
+    console.log('TonConnect sendTransaction response:', res);
     // 3.2) extract BOC of the signed external-in message
     const inMessageBoc = res.boc;
     if (!inMessageBoc) {
