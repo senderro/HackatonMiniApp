@@ -6,9 +6,9 @@ export const POST = withTelegramAuth(async (req: Request, initData: any) => {
   const { pendingPaymentId, inMessageBoc } = await req.json();
    let body: any;
   try {
-    body = await req.json();
+    body = await req.clone().json();
   } catch (e) {
-    console.error('markPaid: erro ao fazer req.json()', e);
+    console.error('markPaid: erro ao fazer clone().json()', e);
     return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 });
   }
   console.log('📥 /api/markPaid recebeu:', body);
