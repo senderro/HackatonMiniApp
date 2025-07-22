@@ -3,7 +3,7 @@ import { withTelegramAuth } from '@/app/lib/requireAuth';
 import { prisma }           from '@/app/lib/prisma';
 
 export async function  POST(req: Request) {
-  const { pendingPaymentId, inMessageBoc } = await req.json();
+  const { pendingPaymentId, inMessageBoc, walletAddress } = await req.json();
   console.log(pendingPaymentId);
   console.log(inMessageBoc);
   
@@ -18,7 +18,7 @@ export async function  POST(req: Request) {
     // Só salva o BOC da mensagem; o worker vai confirmar on‐chain e marcar pago
     await prisma.pendingPayment.update({
       where: { id: pendingPaymentId },
-      data: { txHash: inMessageBoc },
+      data: { txHash: inMessageBoc ,user_to_address:  walletAddress,},
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

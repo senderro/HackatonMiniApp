@@ -142,6 +142,7 @@ export default function GroupDetail() {
       body: JSON.stringify({
         pendingPaymentId: p.id,
         inMessageBoc,
+        walletAddress
       }),
     })
     if (!markRes.ok) {
