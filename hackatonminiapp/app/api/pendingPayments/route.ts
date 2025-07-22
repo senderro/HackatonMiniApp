@@ -1,5 +1,6 @@
 import { prisma } from '@/app/lib/prisma';
 import { withTelegramAuth } from '@/app/lib/requireAuth';
+import { kMaxLength } from 'buffer';
 import { NextResponse } from 'next/server';
 
 export const GET = withTelegramAuth(async (req: Request, initData: any) => {
@@ -52,6 +53,7 @@ export const GET = withTelegramAuth(async (req: Request, initData: any) => {
 
 
     const pagamentos = pendencias.map(p => ({
+        id: p.id,
         valor_brl: parseFloat(p.valor.toString()),
         valor_ton: parseFloat((parseFloat(p.valor.toString()) / cotacaoTON).toFixed(3)),
         para: {
