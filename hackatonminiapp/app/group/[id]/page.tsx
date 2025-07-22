@@ -136,9 +136,8 @@ export default function GroupDetail() {
     }
 
     // 3.3) register with backend; worker fará polling
-    const markRes = await fetch('/api/markPaid', {
+    const markRes = await telegramFetch('/api/markPaid', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pendingPaymentId: p.id,
         inMessageBoc,
