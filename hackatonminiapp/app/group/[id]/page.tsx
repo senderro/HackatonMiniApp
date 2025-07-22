@@ -68,24 +68,21 @@ export default function GroupDetail() {
     fetchBagDetails();
   }, [id, initData]);
 
-  // 2) fetch on-chain fee params
-  useEffect(() => {
-    async function fetchFeeOnChain() {
+ useEffect(() => {
+    async function fetchFee() {
       try {
-        const addr     = Address.parse(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!);
-        const { FeePayment } = await import('@/contracts/build/FeePayment_FeePayment');
-        const contract = clientRpc.open(FeePayment.fromAddress(addr));
-        const num = await contract.getGetFeeNumerator();
-        const den = await contract.getGetFeeDenominator();
-        setFeeNum(Number(num));
-        setFeeDen(Number(den));
-      } catch (e) {
-        console.error('Erro ao ler fee:', e);
+        const res = await fetch('/api/fee');
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Erro ao ler fee');
+        setFeeNum(json.numerator);
+        setFeeDen(json.denominator);
+      } catch (e: any) {
+        console.error('Erro ao ler fee via API:', e);
       }
     }
-    fetchFeeOnChain();
+    fetchFee();
   }, []);
-
+  
   // 3) handlePay agora só envia + registra inMessageBoc
   const handlePay = async (p: any) => {
     if (!walletAddress) {
@@ -94,11 +91,10 @@ export default function GroupDetail() {
     }
 
     // recalc fee on-chain
-    const addr     = Address.parse(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!);
-    const { FeePayment } = await import('@/contracts/build/FeePayment_FeePayment');
-    const contract = clientRpc.open(FeePayment.fromAddress(addr));
-    const currentNum = Number(await contract.getGetFeeNumerator());
-    const currentDen = Number(await contract.getGetFeeDenominator());
+    const feeRes = await fetch('/api/fee');
+    const feeJson = await feeRes.json();
+    const currentNum = feeJson.numerator;
+    const currentDen = feeJson.denominator;
     if (currentNum !== feeNum || currentDen !== feeDen) {
       if (!confirm(
         `🚨 A taxa mudou de ${feeNum}/${feeDen} para ${currentNum}/${currentDen}.\n` +
